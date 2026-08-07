@@ -1,7 +1,7 @@
 # QuizQuest API
 
-A safe LLM proxy for the QuizQuest kids' quiz frontend. It holds the Anthropic
-API key server-side, forces the model into a strict schema, moderates topics and
+A safe LLM proxy for the QuizQuest kids' quiz frontend. It keeps the Anthropic
+API key server-side with a strict schema for model, moderates topics and
 output, caches by request, and rate-limits per client.
 
 ## Architecture
@@ -74,7 +74,7 @@ docker run --env-file .env -p 8000:8000 quizquest-api
 
 ## Mock mode (no API key)
 
-To run the whole API offline with hardcoded responses (Pokémon MCQs), set
+To run the whole API offline (no call to LLM) with hardcoded responses (Pokémon MCQs), set
 `MOCK_MODE=true` in `.env` (or export it) and start normally:
 
 ```bash
