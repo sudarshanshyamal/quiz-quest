@@ -16,7 +16,7 @@ For the quiz to generate, the **backend must also be running** in another
 terminal:
 
 ```bash
-# in the quizquest-backend folder
+# in the backend folder
 uvicorn app.main:app --port 8000
 # no API key? start it in mock mode instead:
 #   MOCK_MODE=true uvicorn app.main:app --port 8000   (PowerShell: set $env:MOCK_MODE="true" first)
@@ -36,11 +36,3 @@ built-in Pokémon quiz and never calls the backend — handy for pure UI work.
 - `src/api.js` — thin client for the backend (`/api/generate`, `/api/grade`)
 - `src/main.jsx` — mounts the app
 - `index.html` — loads Tailwind (Play CDN) and the app
-
-## Note on Tailwind
-
-This project uses the Tailwind Play CDN (a `<script>` in `index.html`) so there's
-no build config to fuss with. It logs a "not for production" warning in the
-console — fine for local dev. For a production build, install Tailwind properly
-(`tailwindcss` + PostCSS, or the `@tailwindcss/vite` plugin) and remove the CDN
-script.
