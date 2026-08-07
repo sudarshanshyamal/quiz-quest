@@ -61,7 +61,7 @@ python -m venv .venv
 Then, on any OS (with the venv active — you'll see `(.venv)` in the prompt):
 ```bash
 pip install -r requirements.txt
-cp .env.example .env          # Windows: copy .env.example .env   — then add your ANTHROPIC_API_KEY
+cp .env.example .env          # Windows: copy .env.example .env   — then add your ANTHROPIC_API_KEY (not limited to Anthropic. Use provider of your choice and update models accordingly.)
 uvicorn app.main:app --reload --port 8000
 ```
 
