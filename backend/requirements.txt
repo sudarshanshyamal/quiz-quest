@@ -1,0 +1,8 @@
+# QuizQuest backend dependencies
+fastapi>=0.115
+uvicorn[standard]>=0.30
+anthropic>=0.40          # needs a version exposing messages.parse(); use the latest
+pydantic>=2.7
+pydantic-settings>=2.3
+python-dotenv>=1.0
+tenacity>=8.3
