@@ -37,14 +37,14 @@ Create and activate a virtual environment.
 
 **macOS / Linux**
 ```bash
-cd quizquest-backend
+cd backend
 python -m venv .venv
 source .venv/bin/activate
 ```
 
 **Windows — PowerShell**
 ```powershell
-cd quizquest-backend
+cd backend
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
@@ -53,7 +53,7 @@ If PowerShell blocks the script ("running scripts is disabled"), run once:
 
 **Windows — Command Prompt**
 ```bat
-cd quizquest-backend
+cd backend
 python -m venv .venv
 .venv\Scripts\activate.bat
 ```
@@ -86,53 +86,6 @@ In mock mode no `ANTHROPIC_API_KEY` is required and nothing hits the network —
 real validation, moderation, cache, and sanitize pipeline. Flip it back to
 `false` to use the live models. This mirrors the frontend's `MOCK_MODE` flag.
 
-## Persistence (repository seam)
-
-Data access goes through a `Repository` interface (`app/repository.py`):
-parents + consent, child profiles, and a saved question bank. The default is an
-in-memory implementation, so the app runs offline with nothing to configure.
-
-Set `DATABASE_URL` to switch to Postgres (`app/db/postgres_repository.py`),
-selected automatically by `make_repository`:
-
-```bash
-pip install asyncpg
-psql "$DATABASE_URL" -f app/db/schema.sql
-DATABASE_URL=postgresql://user:pass@localhost:5432/quizquest uvicorn app.main:app
-```
-
-The in-memory repo auto-seeds two demo parents; Postgres does not. If you use
-`AUTH_ENABLED=true` with Postgres, seed them once so the stub tokens work:
-`psql "$DATABASE_URL" -f app/db/seed_demo.sql` (or just sign in as a new parent
-and grant consent through the flow).
-
-Consent is read through the repository, and generated quizzes are written to the
-question bank. Endpoints: `POST /api/children`, `GET /api/children`,
-`GET /api/quizzes` (all behind the same consent gate as generation).
-
-## MVP stubs: consent/auth + moderation service
-
-Two seams are wired in for the path to a real kids' product, both designed to
-swap for real providers and both no-ops offline:
-
-**Consent/auth** (`app/auth.py`). Set `AUTH_ENABLED=true` to require a bearer
-token from a consented parent on `/api/generate` and `/api/grade`. Missing token
-→ 401; token without consent → 403. Off by default, so dev/offline/mock need no
-token. Replace `_verify` with real verification against your auth provider
-(Clerk / Auth0 / Firebase / Supabase) and read consent from your DB.
-
-```bash
-curl -s localhost:8000/api/generate -H "content-type: application/json" \
-  -H "Authorization: Bearer demo-consented" \
-  -d '{"topic":"space","age":8,"count":3,"types":[]}'
-```
-
-**Moderation service** (`app/moderation.py` → `ModerationService`). All
-kid-safety checks go through one boundary: `screen_topic` (input) and
-`clean_output` (generated questions), with flags recorded to a log
-(`GET /admin/moderation-flags`, protect in prod). Swap the internals for a
-dedicated moderation model without touching call sites.
-
 ## Endpoints
 
 ```bash
@@ -154,38 +107,6 @@ curl -s localhost:8000/api/grade -H 'content-type: application/json' -d '{
 `/api/generate` returns `{ topic, age, questions: [...], cached }`. Each question
 carries `id, type, question, options, correctIndex, answer, keyPoints,
 explanation, hint`.
-
-## Wiring the frontend
-
-Copy `frontend/api.js` into your React app and make two swaps in `QuizQuest.jsx`:
-
-1. **Generation** — in `App.generate`, replace the `callClaude(...)` +
-   `extractJson` + `sanitizeQuestions` block with:
-
-   ```js
-   import { generateQuiz, gradeAnswer } from "./api";
-   // ...
-   const data = await generateQuiz({ ...cfg, seed: cfg.seed || Date.now().toString() });
-   setQuestions(data.questions);
-   setResults(new Array(data.questions.length).fill(null));
-   setScreen("quiz");
-   ```
-
-   Pass a fresh `seed` (e.g. `Date.now()`) on the "New quiz on same topic" button
-   so it bypasses the cache and gets new questions; a retry reusing the same seed
-   is served from cache.
-
-2. **Grading** — in `QuizScreen.check`, replace the subjective `callClaude(...)`
-   call with:
-
-   ```js
-   const j = await gradeAnswer({
-     question: q.question, modelAnswer: q.answer,
-     keyPoints: q.keyPoints, childAnswer: text, age,
-   });
-   ```
-
-You can then delete the in-browser `callClaude` helper entirely.
 
 ## Tests
 
